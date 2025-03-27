@@ -12,8 +12,15 @@
 
 html,
 body {
+  height: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+}
+
+/* NOTE: This targets the root div Next.js creates */
+body>div,
+main {
+  height: 100%;
 }
 
 body {
