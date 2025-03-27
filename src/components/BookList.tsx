@@ -12,8 +12,13 @@ import {
     AspectRatio,
     ScrollArea,
     TextField,
+    Table,
 } from "@radix-ui/themes"
 import { BookDeleteDialog } from "./BookDeleteDialog"
+import { GridIcon, RowsIcon } from "@radix-ui/react-icons"
+import { ToggleGroup } from "radix-ui"
+
+import "./toggle.css"
 
 // Simple gray placeholder as data URL - much faster than external requests
 const PLACEHOLDER_IMAGE =
@@ -77,9 +82,12 @@ const BookCoverImage = ({ src, alt }: { src?: string; alt: string }) => {
     )
 }
 
+type ViewType = "grid" | "table"
+
 export const BookList = () => {
     const books = useStore($filteredBooks)
     const nameFilter = useStore($nameFilter)
+    const [viewType, setViewType] = useState<ViewType>("grid")
 
     return (
         <Box
@@ -89,9 +97,33 @@ export const BookList = () => {
                 lg: "3",
             }}
         >
-            <Heading size="5" mb="4">
-                Book Collection
-            </Heading>
+            <Flex justify="between" align="center" mb="4">
+                <Heading size="5">Book Collection</Heading>
+                {/* TODO: Refactor this to a theme component */}
+                <ToggleGroup.Root
+                    className="ToggleGroup"
+                    type="single"
+                    value={viewType}
+                    onValueChange={(value) => {
+                        if (value) setViewType(value as ViewType)
+                    }}
+                >
+                    <ToggleGroup.Item
+                        className="ToggleGroupItem"
+                        value="grid"
+                        aria-label="Grid view"
+                    >
+                        <GridIcon />
+                    </ToggleGroup.Item>
+                    <ToggleGroup.Item
+                        className="ToggleGroupItem"
+                        value="table"
+                        aria-label="Table view"
+                    >
+                        <RowsIcon />
+                    </ToggleGroup.Item>
+                </ToggleGroup.Root>
+            </Flex>
 
             <Box
                 mb="3"
@@ -118,92 +150,163 @@ export const BookList = () => {
                     style={{ height: "calc(100vh - 200px)" }}
                     scrollbars="vertical"
                 >
-                    {/* TODO: Try to refactor this to grid. Flex behaves strange in some cases. */}
-                    <Flex
-                        direction="row"
-                        gap={{
-                            initial: "2",
-                            lg: "3",
-                        }}
-                        width="100%"
-                        wrap="wrap"
-                    >
-                        {books.map((book) => (
-                            <Box
-                                key={book.id}
-                                width={{
-                                    initial: "100%",
-                                    sm: "49%",
-                                    lg: "24%",
-                                }}
-                            >
-                                <Card
-                                    style={{
-                                        height: "100%",
-                                        width: "100%",
-                                        display: "flex",
-                                        flexDirection: "column",
+                    {viewType === "grid" ? (
+                        // Grid View
+                        <Flex
+                            direction="row"
+                            gap={{
+                                initial: "2",
+                                lg: "3",
+                            }}
+                            width="100%"
+                            wrap="wrap"
+                        >
+                            {books.map((book) => (
+                                <Box
+                                    key={book.id}
+                                    width={{
+                                        initial: "100%",
+                                        sm: "49%",
+                                        lg: "24%",
                                     }}
                                 >
-                                    {/* Image Section - Fixed ratio */}
-                                    <AspectRatio ratio={4 / 3}>
-                                        <BookCoverImage
-                                            src={book.picture}
-                                            alt={`Cover of ${book.name}`}
-                                        />
-                                    </AspectRatio>
-
-                                    {/* Content Section - Fills remaining height */}
-                                    <Flex
-                                        p="3"
-                                        direction="column"
-                                        flexGrow="1"
-                                        flexShrink="1"
+                                    <Card
+                                        style={{
+                                            height: "100%",
+                                            width: "100%",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                        }}
                                     >
+                                        {/* Image Section - Fixed ratio */}
+                                        <AspectRatio ratio={4 / 3}>
+                                            <BookCoverImage
+                                                src={book.picture}
+                                                alt={`Cover of ${book.name}`}
+                                            />
+                                        </AspectRatio>
+
+                                        {/* Content Section - Fills remaining height */}
                                         <Flex
-                                            justify="between"
-                                            align="start"
-                                            mb="1"
+                                            p="3"
+                                            direction="column"
+                                            flexGrow="1"
+                                            flexShrink="1"
                                         >
-                                            <Heading as="h3" size="3">
+                                            <Flex
+                                                justify="between"
+                                                align="start"
+                                                mb="1"
+                                            >
+                                                <Heading as="h3" size="3">
+                                                    {book.name}
+                                                </Heading>
+                                                <BookDeleteDialog
+                                                    bookId={book.id}
+                                                    bookName={book.name}
+                                                />
+                                            </Flex>
+
+                                            {book.author && (
+                                                <Text
+                                                    as="div"
+                                                    size="2"
+                                                    color="gray"
+                                                    mb="2"
+                                                >
+                                                    by {book.author}
+                                                </Text>
+                                            )}
+
+                                            {/* Description with auto overflow */}
+                                            {book.description && (
+                                                <ScrollArea
+                                                    style={{
+                                                        flex: 1,
+                                                        marginTop: "auto",
+                                                    }}
+                                                    scrollbars="vertical"
+                                                >
+                                                    <Text as="p" size="2">
+                                                        {book.description}
+                                                    </Text>
+                                                </ScrollArea>
+                                            )}
+                                        </Flex>
+                                    </Card>
+                                </Box>
+                            ))}
+                        </Flex>
+                    ) : (
+                        // Table View
+                        <Table.Root variant="surface">
+                            <Table.Header>
+                                <Table.Row>
+                                    <Table.ColumnHeaderCell>
+                                        Cover
+                                    </Table.ColumnHeaderCell>
+                                    <Table.ColumnHeaderCell>
+                                        Title
+                                    </Table.ColumnHeaderCell>
+                                    <Table.ColumnHeaderCell>
+                                        Author
+                                    </Table.ColumnHeaderCell>
+                                    <Table.ColumnHeaderCell>
+                                        Description
+                                    </Table.ColumnHeaderCell>
+                                    <Table.ColumnHeaderCell></Table.ColumnHeaderCell>
+                                </Table.Row>
+                            </Table.Header>
+
+                            <Table.Body>
+                                {books.map((book) => (
+                                    <Table.Row key={book.id}>
+                                        <Table.Cell>
+                                            <Box
+                                                style={{
+                                                    width: "60px",
+                                                    height: "60px",
+                                                }}
+                                            >
+                                                <BookCoverImage
+                                                    src={book.picture}
+                                                    alt={`Cover of ${book.name}`}
+                                                />
+                                            </Box>
+                                        </Table.Cell>
+                                        <Table.Cell>
+                                            <Text weight="bold">
                                                 {book.name}
-                                            </Heading>
+                                            </Text>
+                                        </Table.Cell>
+                                        <Table.Cell>
+                                            {book.author || "-"}
+                                        </Table.Cell>
+                                        <Table.Cell>
+                                            <Text
+                                                style={{
+                                                    display: "-webkit-box",
+                                                    WebkitLineClamp: 2,
+                                                    WebkitBoxOrient: "vertical",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                    maxWidth: "300px",
+                                                }}
+                                            >
+                                                {book.description || "-"}
+                                            </Text>
+                                        </Table.Cell>
+                                        <Table.Cell>
                                             <BookDeleteDialog
                                                 bookId={book.id}
                                                 bookName={book.name}
                                             />
-                                        </Flex>
-
-                                        {book.author && (
-                                            <Text
-                                                as="div"
-                                                size="2"
-                                                color="gray"
-                                                mb="2"
-                                            >
-                                                by {book.author}
-                                            </Text>
-                                        )}
-
-                                        {/* Description with auto overflow */}
-                                        {book.description && (
-                                            <ScrollArea
-                                                style={{
-                                                    flex: 1,
-                                                    marginTop: "auto",
-                                                }}
-                                                scrollbars="vertical"
-                                            >
-                                                <Text as="p" size="2">
-                                                    {book.description}
-                                                </Text>
-                                            </ScrollArea>
-                                        )}
-                                    </Flex>
-                                </Card>
-                            </Box>
-                        ))}
-                    </Flex>
+                                        </Table.Cell>
+                                    </Table.Row>
+                                ))}
+                            </Table.Body>
+                        </Table.Root>
+                    )}
                 </ScrollArea>
             )}
         </Box>

@@ -38,7 +38,11 @@ export default function Home() {
                         >
                             <BookForm />
                         </Box>
-                        <Box flexGrow="1" minWidth={{ sm: "300px" }}>
+                        <Box
+                            flexGrow="1"
+                            minWidth={{ sm: "300px" }}
+                            width="100%"
+                        >
                             <BookList />
                         </Box>
                     </Flex>

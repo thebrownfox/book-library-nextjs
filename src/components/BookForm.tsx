@@ -2,7 +2,6 @@
 
 import React, { useState } from "react"
 import { Button, TextField, TextArea, Flex, Text, Box } from "@radix-ui/themes"
-import { useStore } from "@nanostores/react"
 import { $books, type Book } from "@/store/bookStore"
 
 type BookFormProps = {
@@ -14,7 +13,6 @@ export const BookForm = ({
     inModal = false,
     onSubmitSuccess,
 }: BookFormProps) => {
-    const books = useStore($books)
     const [formData, setFormData] = useState({
         name: "",
         author: "",
